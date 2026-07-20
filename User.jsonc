@@ -1,0 +1,29 @@
+{
+  "name": "Submission",
+  "type": "object",
+  "properties": {
+    "tracking_number": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "session_label": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "researcher_notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "tracking_number",
+    "project_id",
+    "session_label"
+  ]
+}

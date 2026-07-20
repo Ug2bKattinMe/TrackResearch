@@ -1,0 +1,121 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
+import { ArrowRight, Beaker, FileText, ShieldCheck, HeartPulse, Scale, FlaskConical } from "lucide-react";
+
+export default function Home() {
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    base44.entities.Project
+      .filter({ status: "active" }, "-created_date", 50)
+      .then(setProjects)
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <div className="space-y-12">
+      <section className="border-b border-slate-200 pb-12">
+        <div className="max-w-3xl">
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600 mb-6">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#14b8a6]" />
+            Anonymous · No account required
+          </div>
+          <h1 className="font-heading text-4xl sm:text-5xl font-semibold text-primary tracking-tight leading-[1.05]">
+            Contribute to research.
+            <br />
+            <span className="text-slate-400">Stay anonymous.</span>
+          </h1>
+          <p className="mt-5 text-base text-slate-600 leading-relaxed max-w-xl">
+            Browse active research studies, follow the submission steps, and send your data — linked only to a private tracking number issued to you. Researchers review aggregated, de-identified data.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <div className="flex items-baseline justify-between mb-6">
+          <h2 className="font-heading text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Active Studies
+          </h2>
+          <span className="text-xs text-slate-400">
+            {projects.length} {projects.length === 1 ? "study" : "studies"}
+          </span>
+        </div>
+        {loading ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-44 rounded-lg bg-slate-50 animate-pulse" />
+            ))}
+          </div>
+        ) : projects.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-300 p-10 text-center text-sm text-slate-500">
+            No active studies yet. Check back soon.
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {projects.map((p) => (
+              <Link
+                key={p.id}
+                to={`/project/${p.id}`}
+                className="group rounded-lg border border-slate-200 p-6 hover:border-primary hover:shadow-sm transition-all bg-white"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="w-10 h-10 rounded-md bg-primary/5 flex items-center justify-center">
+                    <Beaker className="w-5 h-5 text-primary" strokeWidth={2} />
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />
+                </div>
+                <h3 className="mt-4 font-heading text-lg font-semibold text-primary tracking-tight">{p.name}</h3>
+                <p className="mt-2 text-sm text-slate-600 line-clamp-3 leading-relaxed">{p.goal_description}</p>
+                <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
+                  <FileText className="w-3.5 h-3.5" />
+                  {p.session_options?.length || 0} submission {(p.session_options?.length || 0) === 1 ? "session" : "sessions"}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <HeartPulse className="w-4 h-4 text-[#14b8a6]" />
+            <h3 className="font-heading text-sm font-semibold text-primary">No-harm clause</h3>
+          </div>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Participation in any study is entirely voluntary. You may stop at any time without penalty.
+            All studies listed here are observational data-collection exercises; you perform any physical
+            activity at your own risk and within your own limits. If you have a medical condition, consult
+            a healthcare professional before taking part. This platform and its researchers accept no liability
+            for any injury or harm arising from your participation.
+          </p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Scale className="w-4 h-4 text-[#14b8a6]" />
+            <h3 className="font-heading text-sm font-semibold text-primary">Ethical use of active studies</h3>
+          </div>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Active studies are shared in good faith for research purposes only. Please submit truthful,
+            good-faith data; do not fabricate entries or attempt to skew results. Do not reuse, republish,
+            or commercialize study content or another participant's data. Researchers commit to reviewing
+            only aggregated, de-identified information and to removing studies that no longer meet ethical
+            or scientific standards.
+          </p>
+        </div>
+      </section>
+
+      <section className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-200 pt-6">
+        <Link to="/submit-proposal" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
+          <FlaskConical className="w-4 h-4" /> Submit a study proposal
+        </Link>
+        <div className="flex items-center gap-2 text-xs text-slate-400">
+          <Beaker className="w-4 h-4 text-slate-300" />
+          <span>© {new Date().getFullYear()} ResearchLink. All rights reserved.</span>
+        </div>
+      </section>
+    </div>
+  );
+}

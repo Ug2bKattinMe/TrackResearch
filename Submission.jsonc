@@ -1,0 +1,57 @@
+{
+  "name": "Project",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "form_type": {
+      "type": "string",
+      "enum": [
+        "music_performance",
+        "generic"
+      ],
+      "default": "music_performance"
+    },
+    "goal_description": {
+      "type": "string"
+    },
+    "data_needed": {
+      "type": "string"
+    },
+    "submission_instructions": {
+      "type": "string"
+    },
+    "session_options": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    },
+    "locked": {
+      "type": "boolean",
+      "default": false
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "name",
+    "goal_description",
+    "status"
+  ]
+}

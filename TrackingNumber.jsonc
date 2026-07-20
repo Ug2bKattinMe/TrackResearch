@@ -1,0 +1,28 @@
+{
+  "name": "StudyProposal",
+  "type": "object",
+  "properties": {
+    "contact_name": {
+      "type": "string"
+    },
+    "contact_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "organization": {
+      "type": "string"
+    },
+    "study_title": {
+      "type": "string"
+    },
+    "proposal": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "contact_name",
+    "contact_email",
+    "study_title",
+    "proposal"
+  ]
+}

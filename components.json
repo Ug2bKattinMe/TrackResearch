@@ -1,0 +1,160 @@
+import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { base44 } from "@/api/base44Client";
+import { getOrCreateTrackingNumber } from "@/lib/tracking";
+import { ArrowLeft, CheckCircle2, Target, ListChecks, ClipboardList } from "lucide-react";
+import MusicSubmissionForm from "@/components/MusicSubmissionForm";
+import GenericSubmissionForm from "@/components/GenericSubmissionForm";
+
+export default function ProjectDetail() {
+  const { id } = useParams();
+  const [project, setProject] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [trackingNumber, setTN] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [justSubmitted, setJustSubmitted] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const code = await getOrCreateTrackingNumber();
+      setTN(code);
+      const [p, subs] = await Promise.all([
+        base44.entities.Project.get(id),
+        base44.entities.Submission.filter({ project_id: id }, "-created_date", 100),
+      ]);
+      setProject(p);
+      setHistory(subs.filter((s) => s.tracking_number === code));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  if (loading) return <div className="h-64 rounded-lg bg-slate-50 animate-pulse" />;
+  if (!project)
+    return (
+      <div className="text-center py-20 text-slate-500">
+        Study not found.{" "}
+        <Link to="/" className="text-primary underline">
+          Back to studies
+        </Link>
+      </div>
+    );
+
+  const instructions = (project.submission_instructions || "").split("\n").filter(Boolean);
+  const today = new Date().toISOString().slice(0, 10);
+  const inWindow =
+    (!project.start_date || project.start_date <= today) &&
+    (!project.end_date || project.end_date >= today);
+
+  return (
+    <div className="space-y-8 max-w-3xl">
+      <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary transition-colors">
+        <ArrowLeft className="w-4 h-4" /> All studies
+      </Link>
+
+      <header className="border-b border-slate-200 pb-6">
+        <div className="text-xs uppercase tracking-wide text-[#14b8a6] font-semibold mb-2">Research Study</div>
+        <h1 className="font-heading text-3xl font-semibold text-primary tracking-tight">{project.name}</h1>
+        {(project.start_date || project.end_date) && (
+          <div className="mt-3 text-xs text-slate-500">
+            Submission window: {project.start_date || "open"} → {project.end_date || "open"}
+            {!inWindow && (
+              <span className="text-amber-700 font-medium"> · this window is currently closed</span>
+            )}
+          </div>
+        )}
+      </header>
+
+      <section>
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+          <Target className="w-3.5 h-3.5" /> Goal
+        </div>
+        <p className="text-slate-700 leading-relaxed">{project.goal_description}</p>
+      </section>
+
+      <section>
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+          <ListChecks className="w-3.5 h-3.5" /> What information is needed
+        </div>
+        <p className="text-slate-700 leading-relaxed whitespace-pre-line">{project.data_needed}</p>
+      </section>
+
+      {instructions.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
+            <ClipboardList className="w-3.5 h-3.5" /> How to submit
+          </div>
+          <ol className="space-y-2">
+            {instructions.map((step, i) => (
+              <li key={i} className="flex gap-3 text-slate-700">
+                <span className="flex-none w-5 h-5 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold flex items-center justify-center mt-0.5">
+                  {i + 1}
+                </span>
+                <span className="leading-relaxed">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      {history.length > 0 && (
+        <section className="rounded-lg border border-slate-200 p-5 bg-slate-50/50">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">Your submissions</div>
+          <div className="space-y-2">
+            {history.map((s) => (
+              <div key={s.id} className="flex items-center gap-2 text-sm text-slate-700">
+                <CheckCircle2 className="w-4 h-4 text-[#14b8a6]" />
+                <span>{s.session_label}</span>
+                <span className="text-slate-400 text-xs ml-auto">
+                  {s.created_date ? new Date(s.created_date).toLocaleString() : ""}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {project.status === "active" && inWindow ? (
+        project.form_type === "music_performance" ? (
+          <MusicSubmissionForm
+            project={project}
+            history={history}
+            onSubmitted={() => {
+              setJustSubmitted(true);
+              load();
+            }}
+          />
+        ) : (
+          <GenericSubmissionForm
+            project={project}
+            history={history}
+            onSubmitted={() => {
+              setJustSubmitted(true);
+              load();
+            }}
+          />
+        )
+      ) : (
+        <div className="rounded-lg border border-slate-200 p-6 text-center text-sm text-slate-500">
+          This study is not currently accepting submissions.
+        </div>
+      )}
+
+      {justSubmitted && (
+        <div className="rounded-lg border border-[#14b8a6] bg-[#14b8a6]/5 p-5 flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 text-[#14b8a6]" />
+          <div className="text-sm text-slate-700">
+            Submission recorded. Your tracking number{" "}
+            <span className="font-mono font-semibold text-primary">{trackingNumber}</span> links this data anonymously.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
